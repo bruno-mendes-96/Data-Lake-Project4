@@ -1,6 +1,1 @@
 pyspark
-boto3
-pandas
-requests
-datetime
-seaborn
