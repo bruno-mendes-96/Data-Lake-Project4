@@ -91,7 +91,8 @@ def process_log_data(spark, input_data, output_data):
         .select('userId', 'firstName', 'lastName', 'gender', 'level')\
         .withColumnRenamed('userId', 'user_id')\
         .withColumnRenamed('firstName', 'first_name')\
-        .withColumnRenamed('lastName', 'last_name')
+        .withColumnRenamed('lastName', 'last_name')\
+        .dropDuplicates()
 
     # write users table to parquet files
     users_table.write.parquet(output_data + 'dim_users/', 'overwrite')
@@ -109,10 +110,11 @@ def process_log_data(spark, input_data, output_data):
         .withColumn('year', year(col('datetime')))\
         .withColumn('weekday', dayofweek(col('datetime')))\
         .withColumnRenamed('datetime', 'start_time')\
-        .select('start_time', 'hour', 'day', 'week', 'month', 'year', 'weekday')
+        .select('start_time', 'hour', 'day', 'week', 'month', 'year', 'weekday')\
+        .dropDuplicates()
 
     # write time table to parquet files partitioned by year and month
-    time_table.write.parquet(output_data + 'dim_time/', 'overwrite')
+    time_table.write.partitionBy('year', 'month').parquet(output_data + 'dim_time/', 'overwrite')
 
     # read in song data to use for songplays table
     song_data = input_data + 'song_data/*/*/*/*.json'
@@ -129,7 +131,8 @@ def process_log_data(spark, input_data, output_data):
         .withColumnRenamed('sessionId', 'session_id')\
         .withColumnRenamed('userAgent', 'user_agent')\
         .withColumn('year', year(col('start_time')))\
-        .withColumn('month', month(col('start_time')))
+        .withColumn('month', month(col('start_time')))\
+        .dropDuplicates()
 
     # write songplays table to parquet files partitioned by year and month
     songplays_table.write.partitionBy('year', 'month').parquet(output_data + 'fact_songplays/', 'overwrite')
